@@ -15,7 +15,7 @@ function isStrInstuction(logInfo) {
         return re_ret
     }
     else{
-        re = /str.*([wx].*?),.*\[(x\d+),.*/
+        re = /str.*([wx].*?),.*\[(x\d+).*/
         return logInfo.match(re)
     }
 }
