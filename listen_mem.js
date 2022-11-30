@@ -31,14 +31,12 @@ let strace = {
         Interceptor.attach(moduleBase.add(addr), {
             onEnter: function (args) {
                 this.pid = Process.getCurrentThreadId();
-                //看下结构体的值
 
                 Stalker.follow(this.pid, {
                     transform: function (iterator) {
                         let lastInfo;
                         const instruction = iterator.next();
                         let startAddress = instruction.address;
-                        // console.log("startAddress:" + startAddress + " base:" + module.base + " offset:" + offset);
                         if (size === 0) {
                             size = module.size;
                             addr = 0;
@@ -64,29 +62,28 @@ let strace = {
                                     let logInfo = infoMap.get(offset);
                                     var isStr_ret = isStrInstuction(logInfo)
                                     if (isStr_ret) {
-                                        //146dc		strb w8, [x9, #3] ;
                                         let value_reg = isStr_ret[1];
                                         let addr_reg = isStr_ret[2];
                                         let index_reg = null
-                                        if(isStr_ret.length == 4){
+                                        if (isStr_ret.length == 4) {
                                             index_reg = isStr_ret[3]
                                         }
                                         isStr_ret = null
                                         let value_value = getReg(pre_regs, value_reg)
                                         let addr_value = getReg(pre_regs, addr_reg)
                                         let index_value = null
-                                        if(index_reg != null){
+                                        if (index_reg != null) {
                                             index_value = getReg(pre_regs, index_reg)
                                         }
                                         let index_str = ''
-                                        if(index_value != null){
+                                        if (index_value != null) {
                                             index_str = "    " + index_reg + '=' + index_value
                                         }
                                         console.log(logInfo + " ; " + addr_reg + "=" + addr_value + index_str + "    " + value_reg + '=' + value_value)
 
                                         // 保存到文件中
                                         var f = new File("/data/data/com.kanxue.ollvm5/trace4.txt", "a")
-                                        f.write(logInfo + " ; " + addr_reg + "=" + addr_value + index_str + "    " + value_reg + '=' + value_value +"\n")
+                                        f.write(logInfo + " ; " + addr_reg + "=" + addr_value + index_str + "    " + value_reg + '=' + value_value + "\n")
                                         f.flush()
                                         f.close()
                                     }
@@ -125,14 +122,6 @@ const byteToHex = [];
 for (let n = 0; n <= 0xff; ++n) {
     const hexOctet = n.toString(16).padStart(2, "0");
     byteToHex.push(hexOctet);
-}
-
-function hex(arrayBuffer) {
-    const buff = new Uint8Array(arrayBuffer);
-    const hexOctets = [];
-    for (let i = 0; i < buff.length; ++i)
-        hexOctets.push(byteToHex[buff[i]]);
-    return hexOctets.join("");
 }
 
 function formatArm64Regs(context) {
@@ -209,158 +198,12 @@ function getReg(regs, reg) {
         'x27': 27,
         'x28': 28
     }
-    if(reg == 'xzr' || reg == 'wzr'){
+    if (reg == 'xzr' || reg == 'wzr') {
         return '0x0'
     }
-    reg = reg.replace('w','x')
+    reg = reg.replace('w', 'x')
     let index = map[reg]
     return regs[index]
-}
-
-function isRegsChange(context, ins) {
-    let currentRegs = formatArm64Regs(context);
-    let logInfo = "";
-    for (let i = 0; i < 32; i++) {
-        if (i === 30) {
-            continue
-        }
-        let preReg = pre_regs[i];
-        let currentReg = currentRegs[i];
-        if (Number(preReg) !== Number(currentReg)) {
-            if (logInfo === "") {
-                //尝试读取string
-                let changeString = "";
-
-                try {
-                    let nativePointer = new NativePointer(currentReg);
-                    changeString = nativePointer.readCString();
-                } catch (e) {
-                    changeString = "";
-                }
-                if (changeString !== "") {
-                    currentReg = currentReg + "   (" + changeString + ")";
-                }
-                logInfo = "\t " + getRegsString(i) + " = " + preReg + " --> " + currentReg;
-            } else {
-                logInfo = logInfo + "\t " + getRegsString(i) + " = " + preReg + " --> " + currentReg;
-            }
-        }
-    }
-    //打印PC寄存器
-    let parse = JSON.parse(ins);
-    let mnemonic = parse.mnemonic;//补充str
-    if (mnemonic === "str") {
-        let strParams = getStrParams(parse, currentRegs);
-        logInfo = logInfo + strParams;
-    } else if (mnemonic === "cmp") {
-        let cmpParams = getCmpParams(parse, currentRegs);
-        logInfo = logInfo + cmpParams;
-    } else if (mnemonic === "b.gt" || mnemonic === "b.le" || mnemonic === "b.eq" || mnemonic === "b.ne" || mnemonic === "b") {
-        // console.log(ins)
-        let bgtAddr = getbgtAddr(parse, currentRegs);
-        logInfo = logInfo + bgtAddr;
-    }
-    let entity = {};
-    entity.info = logInfo;
-    let address = parse.address;
-    if (lastAddr === undefined) {
-
-        lastAddr = address;
-    } else {
-        let number = address - lastAddr;
-        if (number === 0x4) {
-
-        } else {
-            currentIndex++;
-
-        }
-        lastAddr = address;
-    }
-    pre_regs = currentRegs;
-    return entity;
-}
-let lastAddr = undefined;
-let currentIndex = 0;
-function getRegsString(index) {
-    let reg;
-    if (index === 31) {
-        reg = "sp"
-    } else {
-        reg = "x" + index;
-    }
-    return reg;
-}
-function getbgtAddr(parser, currentRegs) {
-    let bgtAddr = "";
-    let operands = parser.operands;
-    for (let i = 0; i < operands.length; i++) {
-        let operand = operands[i];
-        if (operand.type === "imm") {
-            let value = operand.value;
-            let number = value - moduleBase;
-            bgtAddr = "\t block addr:" + number.toString(16);
-            break
-        }
-    }
-    return bgtAddr;
-}
-function getStrParams(parser, currentRegs) {
-    let operands = parser.operands;
-    for (let i = 0; i < operands.length; i++) {
-        let operand = operands[i];
-        if (operand.type === "reg") {
-            //获取value
-            let value = operand.value;
-            if (value === "wzr") {
-                return "\t " + "str = 0";
-            } else {
-                let replace = value.replace("w", "");
-                let index = replace.replace("x", "");
-                let index_reg = currentRegs[index];
-
-                let changeString = "";
-
-                try {
-                    let nativePointer = new NativePointer(index_reg);
-                    changeString = nativePointer.readCString();
-                } catch (e) {
-                    changeString = "";
-                }
-                //读取值
-                if (changeString !== "") {
-                    index_reg = index_reg + "   (" + changeString + ")";
-                }
-                return "\t " + "str = " + index_reg;
-            }
-
-        }
-    }
-}
-function getCmpParams(parser, currentRegs) {
-    let operands = parser.operands;
-    let cmpInfo = "";
-    for (let i = 0; i < operands.length; i++) {
-        let operand = operands[i];
-        if (operand.type === "reg") {
-            let value = operand.value;
-            let replace = value.replace("w", "");
-            let index = replace.replace("x", "");
-            let index_reg = currentRegs[index];
-            let changeString = "";
-            try {
-                let nativePointer = new NativePointer(index_reg);
-                changeString = nativePointer.readCString();
-            } catch (e) {
-                changeString = "";
-            }
-            //读取值
-            if (changeString !== "") {
-                index_reg = index_reg + "   (" + changeString + ")";
-            }
-            cmpInfo = cmpInfo + "\t " + value + " = " + index_reg;
-        }
-    }
-    return cmpInfo;
 }
 
 let once = false;
