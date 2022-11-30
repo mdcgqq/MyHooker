@@ -7,17 +7,19 @@ let infoMap = new Map();
 let detailInsMap = new Map();
 
 function isStrInstuction(logInfo) {
-    //146dc		strb w8, [x9, #3] ; 
     //13c78           strb w11, [x10, x9]
     let re = /str.*([wx].*?),.*\[(x\d+),\s([wx]\d+)\]/
     let re_ret = logInfo.match(re)
-    if (re_ret != null){
+    if (re_ret != null) {
         return re_ret
     }
-    else{
-        re = /str.*([wx].*?),.*\[(x\d+).*/
-        return logInfo.match(re)
+    //146dc		strb w8, [x9, #3] ; 
+    re = /str.*([wx].*?),.*\[(x\d+).*/
+    re_ret = logInfo.match(re)
+    if (re_ret != null) {
+        return re_ret
     }
+    return null;
 }
 
 let strace = {
