@@ -332,6 +332,7 @@ function trace(soName,offset,size){
 
 function main() {
     // 模块名 代码偏移 大小
+    // 如果大小为0x0，则对整个模块进行trace
     straceInject.start("libr0ysue.so",0x77C,0x68);
 }
 
