@@ -253,16 +253,6 @@ function trace(soName, offset, size) {
 
 function main() {
     // 模块名 代码偏移 大小 
-    /**
-     * idapython:
-# function
-import idaapi
-
-currentFunc = idaapi.get_func(idaapi.get_screen_ea())
-funcStart = currentFunc.start_ea
-funcEnd = currentFunc.end_ea
-print("start:" + str(hex(funcStart)) + ", end:" + str(hex(funcEnd)) + ", size:" + str(hex(funcEnd - funcStart)))
-     */
     // 大小为0，表示trace整个模块
     straceInject.start("libnative-lib.so", 0x19A84, 0x0);
 }
