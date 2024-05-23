@@ -6,7 +6,7 @@ exclusive_store_instructions = ["STLXP", "STLXR", "STLXRB", "STLXRH", "STXP", "S
 exclusive_load_instructions = ["LDAXP", "LDAXR", "LDAXRB", "LDAXRH", "LDXP", "LDXR", "LDXRB", "LDXRH"]
 exclusive_judge_instructions = ["CBNZ", "CBZ"]
 
-f = open('/Users/lihuaqi/MyPlace/ReverseProject/meituan/code/frida/files/12.20.208/patch_exclusive/libmtguard_patch.so', '+rb')
+f = open('./libxxx.so', '+rb')
 code = f.read()
 new_code = bytearray(code)
 
@@ -37,18 +37,18 @@ for (address, size, mnemonic, op_str) in md.disasm_lite(code[0x24000:0x167CB5], 
 		print("0x%x:\t%s\t%s" %(ld_ins["addr"], ld_ins["mnem"], ld_ins["op"]))
 		print("0x%x:\t%s\t%s" %(judge_ins["addr"], judge_ins["mnem"], judge_ins["op"]))
 		
-        # patch load instruction
+        	# patch load instruction
 		new_ins = "ldr  " + ld_ins["op"]
 		encoding, count = ks.asm(bytes(new_ins, 'utf-8'),addr=ld_ins["addr"])
 		new_code[ld_ins["addr"]:ld_ins["addr"]+len(encoding)] = encoding
 		
-        # patch store instruction
+        	# patch store instruction
 		new_op = re.match(r'[wx]\d+, (.*)', op_str).group(1)
 		new_ins = "str  " + new_op
 		encoding, count = ks.asm(bytes(new_ins, 'utf-8'),addr=address)
 		new_code[address:address+len(encoding)] = encoding
 		
-        # patch judge instruction
+        	# patch judge instruction
 		if (judge_ins["mnem"].upper() == "CBNZ"):
 			encoding, count = ks.asm(bytes("nop", 'utf-8'))
 			new_code[judge_ins["addr"]:judge_ins["addr"]+len(encoding)] = encoding
@@ -57,6 +57,6 @@ for (address, size, mnemonic, op_str) in md.disasm_lite(code[0x24000:0x167CB5], 
 			new_ins = "b  " + b_addr
 			encoding, count = ks.asm(bytes(new_ins, 'utf-8'),addr=judge_ins["addr"])
 			new_code[judge_ins["addr"]:judge_ins["addr"]+len(encoding)] = encoding
-new_f = open("/Users/lihuaqi/MyPlace/ReverseProject/meituan/code/frida/files/12.20.208/patch_exclusive/libmtguard_patchII.so", '+wb')
+new_f = open("./libxxx_patch.so", '+wb')
 new_f.write(bytes(new_code))
 new_f.flush()
