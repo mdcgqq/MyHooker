@@ -101,8 +101,8 @@ if (address == 0x6ed95a61e4L) {
 
 本项目参考了以下项目和文章：
 
-[dump内存与模拟执行（二）——编写dump脚本](https://blog.seeflower.dev/archives/166/)
-[dump内存与模拟执行（三）——实践dump上下文](https://blog.seeflower.dev/archives/169/)
-[dump内存与模拟执行（四）——接入unidbg](https://blog.seeflower.dev/archives/170/)
-[dump内存与模拟执行（五）——实战复杂样本](https://blog.seeflower.dev/archives/171/)
+1. [dump内存与模拟执行（二）——编写dump脚本](https://blog.seeflower.dev/archives/166/)
+2. [dump内存与模拟执行（三）——实践dump上下文](https://blog.seeflower.dev/archives/169/)
+3. [dump内存与模拟执行（四）——接入unidbg](https://blog.seeflower.dev/archives/170/)
+4. [dump内存与模拟执行（五）——实战复杂样本](https://blog.seeflower.dev/archives/171/)
 
